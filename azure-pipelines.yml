@@ -1,0 +1,76 @@
+# azure-pipelines.yml — CI para Angular + FastAPI
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  node_version: '20.x'
+  python_version: '3.12'
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build
+  displayName: Build & Test
+  jobs:
+  # --------- Frontend ----------
+  - job: frontend
+    displayName: Build Frontend (Angular)
+    steps:
+    - checkout: self
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(node_version)'
+
+    - script: |
+        cd frontend
+        npm ci --no-audit --no-fund || npm i --no-audit --no-fund --legacy-peer-deps
+        npm run build
+      displayName: 'npm ci & ng build'
+
+    - task: ArchiveFiles@2
+      displayName: 'Zip dist (front)'
+      inputs:
+        rootFolderOrFile: 'frontend/dist/tp05-web'
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/front-dist.zip'
+        archiveType: 'zip'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-dist.zip'
+        artifactName: 'front'
+        publishLocation: 'Container'
+
+  # --------- Backend ----------
+  - job: backend
+    displayName: Test & Package Backend (FastAPI)
+    steps:
+    - checkout: self
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python_version)'
+        architecture: 'x64'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        python -m pytest -q backend/tests
+      displayName: 'Install deps & run tests'
+
+    - task: ArchiveFiles@2
+      displayName: 'Zip backend app'
+      inputs:
+        rootFolderOrFile: 'backend'
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+        archiveType: 'zip'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/backend.zip'
+        artifactName: 'back'
+        publishLocation: 'Container'
