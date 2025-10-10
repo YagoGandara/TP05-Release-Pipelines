@@ -10,10 +10,10 @@ variables:
   azureConnection: 'azure-tp05-connection'
 
   # Nombres de las Web Apps
-  apiQaName:   'api-tp05-qa-gandara'
-  apiProdName: 'api-tp05-prod-gandara'
-  webQaName:   'web-tp05-qa-gandara'
-  webProdName: 'web-tp05-prod-gandara'
+  apiQaName:   '$(apiAppNameQA)'
+  apiProdName: '$(apiAppNamePROD)'
+  webQaName:   '$(webAppNameQA)'
+  webProdName: '$(webAppNamePROD)'
 
 stages:
 # ==================== BUILD ====================
@@ -117,13 +117,13 @@ stages:
               set -e
               echo "Waiting API to be ready..."
               for i in {1..20}; do
-                curl -fsS https://$(apiQaName).azurewebsites.net/readyz && break || sleep 5
+                curl -fsS "$(apiBaseUrlQA)readyz" && break || sleep 5
               done
-              curl -fsS https://$(apiQaName).azurewebsites.net/healthz
+              curl -fsS "$(apiBaseUrlQA)healthz"
 
               echo "Checking FRONT (index)..."
               for i in {1..20}; do
-                curl -fsS https://$(webQaName).azurewebsites.net/ && break || sleep 5
+                curl -fsS "$(webBaseUrlQA)" && break || sleep 5
               done
             displayName: 'Smoke tests QA'
 
@@ -167,11 +167,11 @@ stages:
               set -e
               echo "Waiting API to be ready..."
               for i in {1..20}; do
-                curl -fsS https://$(apiProdName).azurewebsites.net/readyz && break || sleep 5
+                curl -fsS "$(apiBaseUrlPROD)readyz" && break || sleep 5
               done
-              curl -fsS https://$(apiProdName).azurewebsites.net/healthz
+              curl -fsS "$(apiBaseUrlPROD)healthz"
               echo "Checking FRONT (index)..."
               for i in {1..20}; do
-                curl -fsS https://$(webProdName).azurewebsites.net/ && break || sleep 5
+                curl -fsS "$(webBaseUrlPROD)" && break || sleep 5
               done
             displayName: 'Smoke tests PROD'
