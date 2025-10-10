@@ -69,12 +69,6 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
         archiveType: 'zip'
 
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)/backend.zip'
-        artifactName: 'back'
-        publishLocation: 'Container'
-
 # ==================== DEPLOY QA ====================
 - stage: DeployQA
   displayName: Deploy to QA
