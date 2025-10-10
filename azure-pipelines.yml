@@ -56,9 +56,10 @@ stages:
 
     - script: |
         python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
-        python -m pytest -q backend/tests
+        pip install -r requirements.txt
+        python -m pytest -q
       displayName: 'Install deps & run tests'
+      workingDirectory: backend   # <--- clave
 
     - task: ArchiveFiles@2
       displayName: 'Zip backend app'
