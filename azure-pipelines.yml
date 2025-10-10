@@ -9,11 +9,14 @@ variables:
   python_version: '3.12'
   azureConnection: 'azure-tp05-connection'
 
-  # Nombres de las Web Apps
+  # Nombres de las Web Apps (las tomás de variables de UI)
   apiQaName:   '$(apiAppNameQA)'
   apiProdName: '$(apiAppNamePROD)'
   webQaName:   '$(webAppNameQA)'
   webProdName: '$(webAppNamePROD)'
+
+  # Toggle de pruebas de humo
+  runSmokeTests: 'false'   # poné 'true' si querés ejecutarlas
 
 stages:
 # ==================== BUILD ====================
@@ -59,7 +62,7 @@ stages:
         pip install -r requirements.txt
         python -m pytest -q
       displayName: 'Install deps & run tests'
-      workingDirectory: backend   # <--- clave
+      workingDirectory: backend
 
     - task: ArchiveFiles@2
       displayName: 'Zip backend app'
@@ -69,11 +72,11 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
         archiveType: 'zip'
 
-    - task: PublishBuildArtifacts@1         
+    - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)/backend.zip'
         artifactName: 'back'
-        publishLocation: 'Container'   
+        publishLocation: 'Container'
 
 # ==================== DEPLOY QA ====================
 - stage: DeployQA
@@ -93,17 +96,15 @@ stages:
           - download: current
             artifact: back
 
-          # Front a WebApp QA (sirve /index.html como SPA)
           - task: AzureWebApp@1
             displayName: 'Deploy FRONT to $(webQaName)'
             inputs:
               azureSubscription: '$(azureConnection)'
-              appType: 'webAppLinux'     # Linux plan
+              appType: 'webAppLinux'
               appName: '$(webQaName)'
               package: '$(Pipeline.Workspace)/front/front-dist.zip'
               deploymentMethod: 'zipDeploy'
 
-          # API a WebApp QA
           - task: AzureWebApp@1
             displayName: 'Deploy API to $(apiQaName)'
             inputs:
@@ -113,7 +114,6 @@ stages:
               package: '$(Pipeline.Workspace)/back/backend.zip'
               deploymentMethod: 'zipDeploy'
 
-          # Health checks (con reintentos)
           - script: |
               set -e
               echo "Waiting API to be ready..."
@@ -121,12 +121,12 @@ stages:
                 curl -fsS "$(apiBaseUrlQA)readyz" && break || sleep 5
               done
               curl -fsS "$(apiBaseUrlQA)healthz"
-
               echo "Checking FRONT (index)..."
               for i in {1..20}; do
                 curl -fsS "$(webBaseUrlQA)" && break || sleep 5
               done
             displayName: 'Smoke tests QA'
+            condition: and(succeeded(), eq(variables['runSmokeTests'], 'true'))
 
 # ================== DEPLOY PROD (con approval) ==================
 - stage: DeployPROD
@@ -136,7 +136,7 @@ stages:
   jobs:
   - deployment: ProdDeploy
     displayName: Deploy Front & API to PROD
-    environment: 'PROD'    # <-- configurá approval en el Environment
+    environment: 'PROD'
     strategy:
       runOnce:
         deploy:
@@ -176,3 +176,4 @@ stages:
                 curl -fsS "$(webBaseUrlPROD)" && break || sleep 5
               done
             displayName: 'Smoke tests PROD'
+            condition: and(succeeded(), eq(variables['runSmokeTests'], 'true'))
