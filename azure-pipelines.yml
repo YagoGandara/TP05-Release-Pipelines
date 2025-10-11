@@ -33,22 +33,44 @@ stages:
     - script: |
         cd frontend
         npm ci --no-audit --no-fund || npm i --no-audit --no-fund --legacy-peer-deps
-        npm run build
-      displayName: 'npm ci & ng build'
+        npm run build:qa
+      displayName: 'Build QA'
 
     - task: ArchiveFiles@2
-      displayName: 'Zip dist (front)'
+      displayName: 'Zip dist QA (front)'
       inputs:
+        # Si tu Angular 18 deja archivos en dist/tp05-web/browser, cambia esta línea a esa ruta.
         rootFolderOrFile: 'frontend/dist/tp05-web'
         includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/front-dist.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/front-qa.zip'
         archiveType: 'zip'
 
     - task: PublishBuildArtifacts@1
       inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-dist.zip'
-        artifactName: 'front'
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-qa.zip'
+        artifactName: 'front-qa'
         publishLocation: 'Container'
+
+    # ==== Build PROD y zip al toque ====
+    - script: |
+        cd frontend
+        npm run build:prod
+      displayName: 'Build PROD'
+
+    - task: ArchiveFiles@2
+      displayName: 'Zip dist PROD (front)'
+      inputs:
+        # idem nota de 'browser' si aplica en tu versión
+        rootFolderOrFile: 'frontend/dist/tp05-web'
+        includeRootFolder: false
+        archiveFile: '$(Build.ArtifactStagingDirectory)/front-prod.zip'
+        archiveType: 'zip'
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-prod.zip'
+        artifactName: 'front-prod'
+        publishLocation: 'Container'    
 
   - job: backend
     displayName: Test & Package Backend (FastAPI)
@@ -92,17 +114,17 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: front
+            artifact: front-qa
           - download: current
             artifact: back
 
           - task: AzureWebApp@1
-            displayName: 'Deploy FRONT to $(webQaName)'
+            displayName: 'Deploy FRONT QA to $(webQaName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webQaName)'
-              package: '$(Pipeline.Workspace)/front/front-dist.zip'
+              package: '$(Pipeline.Workspace)/front-qa/front-qa.zip'
               deploymentMethod: 'zipDeploy'
 
           - task: AzureWebApp@1
@@ -142,17 +164,17 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: front
+            artifact: front-prod
           - download: current
             artifact: back
 
           - task: AzureWebApp@1
-            displayName: 'Deploy FRONT to $(webProdName)'
+            displayName: 'Deploy FRONT PROD to $(webProdName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webProdName)'
-              package: '$(Pipeline.Workspace)/front/front-dist.zip'
+              package: '$(Pipeline.Workspace)/front-prod/front-prod.zip'
               deploymentMethod: 'zipDeploy'
 
           - task: AzureWebApp@1

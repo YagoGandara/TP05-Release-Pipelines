@@ -6,7 +6,11 @@
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "build:qa": "ng build --configuration=qa",
+    "build:prod": "ng build --configuration=production"
+
+
   },
   "dependencies": {
     "@angular/animations": "18.2.0",

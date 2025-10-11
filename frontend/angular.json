@@ -18,6 +18,24 @@
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": ["src/styles.css"]
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "qa": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.qa.ts"
+                }
+              ]
+            }
           }
         },
         "serve": {
@@ -26,6 +44,14 @@
             "browserTarget": "tp05-web:build",
             "host": "0.0.0.0",
             "port": 4200
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "tp05-web:build:production"
+            },
+            "qa": {
+              "browserTarget": "tp05-web:build:qa"
+            }
           }
         }
       }

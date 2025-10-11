@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: (globalThis as any).API_BASE_URL || 'https://<prod-backend-url>'
+  apiBaseUrl: 'https://api-tp05-prod-gandara-ckczhscna5dyeye2.brazilsouth-01.azurewebsites.net'
 };

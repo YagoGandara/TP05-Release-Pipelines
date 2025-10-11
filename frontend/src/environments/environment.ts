@@ -1,4 +1,6 @@
 export const environment = {
   production: false,
-  apiBaseUrl: (globalThis as any).API_BASE_URL || 'http://localhost:8080'
+  apiBaseUrl: 'http://localhost:8080'
 };
+
+//este es el que apunta a mi local (docker-compose)
