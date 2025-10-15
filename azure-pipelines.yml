@@ -133,6 +133,15 @@ stages:
               package: '$(Pipeline.Workspace)/back/backend.zip'
               deploymentMethod: 'zipDeploy'
 
+
+          - script: |
+              set -e
+              echo "Seeding QA..."
+              curl -fsS -X POST "$(apiBaseUrlQA)admin/seed" \
+                   -H "X-Seed-Token: $(seedTokenQA)"
+              echo "Seed QA OK"
+            displayName: 'Seed DB (QA)'
+
           - script: |
               set -e
               echo "Waiting API to be ready..."
@@ -199,6 +208,14 @@ stages:
               appName: '$(apiProdName)'
               package: '$(Pipeline.Workspace)/back/backend.zip'
               deploymentMethod: 'zipDeploy'
+
+          - script: |
+              set -e
+              echo "Seeding PROD..."
+              curl -fsS -X POST "$(apiBaseUrlPROD)admin/seed" \
+                   -H "X-Seed-Token: $(seedTokenPROD)"
+              echo "Seed PROD OK"
+            displayName: 'Seed DB (PROD)'
 
           - script: |
               set -e

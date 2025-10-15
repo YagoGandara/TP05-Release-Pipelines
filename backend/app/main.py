@@ -1,8 +1,12 @@
 import os
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header, HTTPException
+from .db import engine, SessionLocal
+from .models import Base  
+from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from .deps import get_store, Store
 from .schemas import TodoIn, TodoOut
+from .seed import seed_if_empty
 from dotenv import load_dotenv
 
 load_dotenv(os.getenv("ENV_FILE", None))
@@ -17,6 +21,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Base.metadata.create_all(bind=engine)
+
+# Seed opcional en el primer arranque
+if settings.SEED_ON_START.lower() == "true":
+    with SessionLocal() as db:
+        seed_if_empty(db)
+
+@app.post("/admin/seed")
+def run_seed(x_seed_token: str = Header(default="")):
+    if not settings.SEED_TOKEN or x_seed_token != settings.SEED_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    with SessionLocal() as db:
+        result = seed_if_empty(db)
+    return {"ok": True, "env": settings.ENV, **result}
 
 @app.get("/")
 def root():
