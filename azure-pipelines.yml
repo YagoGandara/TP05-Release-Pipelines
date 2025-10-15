@@ -107,13 +107,11 @@ stages:
 
           #Creación y zippeo de env.js + API de QA
           - script: |
-              mkdir envqa
-              echo "window.__env = { apiBase: '$(apiBaseUrlQA)' };" > envqa/assets_env_js
-              # lo renombramos dentro del ZIP a assets/env.js
-              mkdir -p envqa/assets
-              mv envqa/assets_env_js envqa/assets/env.js
-              cd envqa
-              zip -r ../env-qa.zip .
+              set -e
+              mkdir -p "$(Pipeline.Workspace)/envqa/assets"
+              echo "window.__env = { apiBase: '$(apiBaseUrlQA)' };" > "$(Pipeline.Workspace)/envqa/assets/env.js"
+              cd "$(Pipeline.Workspace)/envqa"
+              zip -r "../env-qa.zip" .
             displayName: 'Generate env.js (QA)'     
 
           #Subida de ZIP para sobreescribir env.js
@@ -177,12 +175,11 @@ stages:
               deploymentMethod: 'zipDeploy'
 
           - script: |
-              mkdir envprod
-              echo "window.__env = { apiBase: '$(apiBaseUrlPROD)' };" > envprod/assets_env_js
-              mkdir -p envprod/assets
-              mv envprod/assets_env_js envprod/assets/env.js
-              cd envprod
-              zip -r ../env-prod.zip .
+              set -e
+              mkdir -p "$(Pipeline.Workspace)/envprod/assets"
+              echo "window.__env = { apiBase: '$(apiBaseUrlPROD)' };" > "$(Pipeline.Workspace)/envprod/assets/env.js"
+              cd "$(Pipeline.Workspace)/envprod"
+              zip -r "../env-prod.zip" .
             displayName: 'Generate env.js (PROD)'
 
           - task: AzureWebApp@1
