@@ -1,7 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/angular-cli",
   "version": 1,
-  "newProjectRoot": "projects",
   "projects": {
     "tp05-web": {
       "projectType": "application",
@@ -20,22 +19,7 @@
             "styles": ["src/styles.css"]
           },
           "configurations": {
-            "production": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
-            },
-            "qa": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.qa.ts"
-                }
-              ]
-            }
+            "production": {}
           }
         },
         "serve": {
@@ -44,14 +28,6 @@
             "browserTarget": "tp05-web:build",
             "host": "0.0.0.0",
             "port": 4200
-          },
-          "configurations": {
-            "production": {
-              "browserTarget": "tp05-web:build:production"
-            },
-            "qa": {
-              "browserTarget": "tp05-web:build:qa"
-            }
           }
         }
       }

@@ -24,7 +24,7 @@ stages:
   displayName: Build & Test
   jobs:
   - job: frontend
-    displayName: Build Frontend (Angular)
+    displayName: Build Frontend (un solo build)
     steps:
     - checkout: self
     - task: NodeTool@0
@@ -33,44 +33,22 @@ stages:
     - script: |
         cd frontend
         npm ci --no-audit --no-fund || npm i --no-audit --no-fund --legacy-peer-deps
-        npm run build:qa
-      displayName: 'Build QA'
+        npm run build -- --configuration=production
+      displayName: 'npm ci & ng build (production)'
 
     - task: ArchiveFiles@2
-      displayName: 'Zip dist QA (front)'
+      displayName: 'Zip dist (front)'
       inputs:
-        # Si tu Angular 18 deja archivos en dist/tp05-web/browser, cambia esta línea a esa ruta.
         rootFolderOrFile: 'frontend/dist/tp05-web'
         includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/front-qa.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/front.zip'
         archiveType: 'zip'
 
     - task: PublishBuildArtifacts@1
       inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-qa.zip'
-        artifactName: 'front-qa'
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/front.zip'
+        artifactName: 'front'
         publishLocation: 'Container'
-
-    # ==== Build PROD y zip al toque ====
-    - script: |
-        cd frontend
-        npm run build:prod
-      displayName: 'Build PROD'
-
-    - task: ArchiveFiles@2
-      displayName: 'Zip dist PROD (front)'
-      inputs:
-        # idem nota de 'browser' si aplica en tu versión
-        rootFolderOrFile: 'frontend/dist/tp05-web'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/front-prod.zip'
-        archiveType: 'zip'
-    
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)/front-prod.zip'
-        artifactName: 'front-prod'
-        publishLocation: 'Container'    
 
   - job: backend
     displayName: Test & Package Backend (FastAPI)
@@ -114,18 +92,39 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: front-qa
+            artifact: front
           - download: current
             artifact: back
 
           - task: AzureWebApp@1
-            displayName: 'Deploy FRONT QA to $(webQaName)'
+            displayName: 'Deploy FRONT to $(webQaName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webQaName)'
-              package: '$(Pipeline.Workspace)/front-qa/front-qa.zip'
+              package: '$(Pipeline.Workspace)/front/front.zip'
               deploymentMethod: 'zipDeploy'
+
+          #Creación y zippeo de env.js + API de QA
+          - script: |
+              mkdir envqa
+              echo "window.__env = { apiBase: '$(apiBaseUrlQA)' };" > envqa/assets_env_js
+              # lo renombramos dentro del ZIP a assets/env.js
+              mkdir -p envqa/assets
+              mv envqa/assets_env_js envqa/assets/env.js
+              cd envqa
+              zip -r ../env-qa.zip .
+            displayName: 'Generate env.js (QA)'     
+
+          #Subida de ZIP para sobreescribir env.js
+          - task: AzureWebApp@1
+            displayName: 'Overlay env.js (QA)'
+            inputs:
+              azureSubscription: '$(azureConnection)'
+              appType: 'webAppLinux'
+              appName: '$(webQaName)'
+              package: '$(Pipeline.Workspace)/env-qa.zip'
+              deploymentMethod: 'zipDeploy'        
 
           - task: AzureWebApp@1
             displayName: 'Deploy API to $(apiQaName)'
@@ -164,17 +163,35 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: front-prod
+            artifact: front
           - download: current
             artifact: back
 
           - task: AzureWebApp@1
-            displayName: 'Deploy FRONT PROD to $(webProdName)'
+            displayName: 'Deploy FRONT to $(webProdName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webProdName)'
-              package: '$(Pipeline.Workspace)/front-prod/front-prod.zip'
+              package: '$(Pipeline.Workspace)/front/front.zip'
+              deploymentMethod: 'zipDeploy'
+
+          - script: |
+              mkdir envprod
+              echo "window.__env = { apiBase: '$(apiBaseUrlPROD)' };" > envprod/assets_env_js
+              mkdir -p envprod/assets
+              mv envprod/assets_env_js envprod/assets/env.js
+              cd envprod
+              zip -r ../env-prod.zip .
+            displayName: 'Generate env.js (PROD)'
+
+          - task: AzureWebApp@1
+            displayName: 'Overlay env.js (PROD)'
+            inputs:
+              azureSubscription: '$(azureConnection)'
+              appType: 'webAppLinux'
+              appName: '$(webProdName)'
+              package: '$(Pipeline.Workspace)/env-prod.zip'
               deploymentMethod: 'zipDeploy'
 
           - task: AzureWebApp@1
