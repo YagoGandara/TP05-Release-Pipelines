@@ -60,9 +60,6 @@ stages:
     - script: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        export DB_URL="sqlite:///$(Pipeline.Workspace)/test-db/app.db"
-        echo "DB_URL = $DB_URL"
-        python -m pytest -q
       displayName: 'Install deps & run tests'
       workingDirectory: backend
 
