@@ -44,5 +44,5 @@
 ---
 ## CORS y seguridad del Seed
 
-- `CORS_ORIGINS` reestringe el origen permitido del SPA por entorno
+- `CORS_ORIGINS` reestringen el origen permitido del SPA por entorno
 - `/admin/seed` requiere un heade `X-Seed-Token` y no hace nada si ya existen filas (no se expone en la interfaz del Front)

@@ -2,7 +2,7 @@
 
 App mínima para establecer **CI/CD** con Azure DevOps, y desplegarlo en **Azure App Service** en entorno de **QA** y **Producción**
 
-** Stack (Estructura)
+## Stack (Estructura) 
 - **Frontend**: Angular 18 (SPA)
 - **Backend**: FastAPI (Python 3.12)
 - **DB**: SQLite por entorno (persiste en /home/data/app.db)
@@ -37,10 +37,10 @@ App mínima para establecer **CI/CD** con Azure DevOps, y desplegarlo en **Azure
 Header : `X-Seed-Token: <token>`
 Ejecuta el seed si la tabla está vacía
 
--`GET /admin/debug`
+- `GET /admin/debug`
 Devuelve `db_url` y si existe el archivo de DB (para verificar la configuracion)
 
--`GET /admin/touch` 
+- `GET /admin/touch` 
 Devuelve `{"count": n}` con el total de registros
 ---
 
@@ -77,22 +77,22 @@ npm start
 ---
 ## Configuración por Entorno
 
-#API - App Setting (QA | PROD)
+# API - App Setting (QA | PROD)
 
 | Nombre | Valor | Disclaimer |
 |---:|:-------|:-------|
 
-|ENV| |qa/prod| |etiqueta de entorno|
-|API_PORT| |8080| |puerto de uvicorn|
-|DB_URL| |`sqlite:////home/data/app.db`| |persistente en `/home/data`|
-|CORS_ORIGIN| |`<URL de cada Front>`| |ejemplo: `https//web-...azuerwebsites.net`|
-|SEED_TOKEN| |`<Secreto>`| |usado por `/admin/seed`|
-|SEED_ON_START| |`false`| |ejecuta seed al boot si está vacío|
+| ENV | qa/prod | etiqueta de entorno|
+| API_PORT | 8080 | puerto de uvicorn |
+| DB_URL | `sqlite:////home/data/app.db`| persistente en `/home/data` |
+| CORS_ORIGIN | `<URL de cada Front>`| ejemplo: `https//web-...azuerwebsites.net` |
+| SEED_TOKEN | `<Secreto>`| usado por `/admin/seed` |
+| SEED_ON_START | `false`| ejecuta seed al boot si está vacío |
 
 El container genera las tablas al iniciar `Base.metadata.create_all(bind=engine)`
 
 ---
-##Front - Inyección de URL de API
+## Front - Inyección de URL de API
 
 El front se construye una sola vez y, en cada deploy, se superpone un archivo `assets/env.js` con:
 
@@ -115,7 +115,7 @@ Se dispara cada vez que haya un push a main
 
 ## CD (Release) - QA y PROD
 
-#Build
+# Build
 1) **Frontend**
     - `npm ci && ng build --configuration=production`
     - Genera `dist/tp05-web/` y se publica como artefacto `front.zip`
@@ -138,7 +138,7 @@ Se dispara cada vez que haya un push a main
     - Requiere aprobación manual del Environment PROD
     - Igual a QA, pero con `env-prod.zip` y `$(seedTokenPROD)`
 
-Se dejaron smoke tests listos, pero no se implementaron porque se me daba de baja los App Services
+Se dejaron smoke tests listos, pero no se implementaron porque se daban de baja los App Services
 
 ---
 
