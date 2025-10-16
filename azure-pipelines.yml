@@ -36,14 +36,12 @@ stages:
         npm run build -- --configuration=production
       displayName: 'npm ci & ng build (production)'
 
-    - task: ArchiveFiles@2
+    - script: |
+        set -e
+        cd frontend/dist/tp05-web
+        zip -r "$(Build.ArtifactStagingDirectory)/front.zip" .
       displayName: 'Zip dist (front)'
-      inputs:
-        rootFolderOrFile: 'frontend/dist/tp05-web/browser'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/front.zip'
-        archiveType: 'zip'
-
+      
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)/front.zip'
@@ -60,7 +58,7 @@ stages:
     - script: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-      displayName: 'Install deps & run tests'
+      displayName: 'Install deps'
       workingDirectory: backend
 
     - task: ArchiveFiles@2
