@@ -1,9 +1,17 @@
+#Python
+*.pyc
+backend/__pycache__/
+
+#Node / Angular
 frontend/node_modules/
 frontend/.angular/
 frontend/dist/
-backend/.venv/
-backend/__pycache__/
-backend/.pytest_cache/
-*.pyc
-.env*
-.DS_Store
+
+# Envs locales
+*.env
+*.env.*
+!.env.example
+
+#VSCode
+.VSCode/
+.idea
