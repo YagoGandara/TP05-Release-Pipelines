@@ -1,12 +1,12 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-
-class TodoIn(BaseModel):
-    title: str = Field(min_length=1, max_length=140)
-    description: Optional[str] = Field(default=None, max_length=500)
+from pydantic import BaseModel, ConfigDict
 
 class TodoOut(BaseModel):
     id: int
     title: str
+    description: str | None = None
     done: bool
-    description: Optional[str]
+    model_config = ConfigDict(from_attributes=True)  # <- clave
+
+class TodoIn(BaseModel):
+    title: str
+    description: str | None = None

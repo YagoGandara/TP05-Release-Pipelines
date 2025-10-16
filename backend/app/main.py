@@ -50,6 +50,25 @@ def readyz(store: Store = Depends(get_store)):
 def healthz(store: Store = Depends(get_store)):
     return store.health()
 
+# --- DEBUG ROUTES (temporales) ---
+@app.get("/admin/debug")
+def debug():
+    import os
+    return {
+        "db_url": settings.DB_URL,                
+        "db_file_exists": os.path.exists("/home/data/app.db"),
+    }
+
+@app.get("/admin/touch")
+def touch():
+    from .models import Todo
+    with SessionLocal() as db:
+        return {"count": db.query(Todo).count()}
+    
+    
+# --- FIN DEBUG ---
+
+
 @app.get("/api/todos", response_model=list[TodoOut])
 def list_todos(store: Store = Depends(get_store)):
     return store.list()
