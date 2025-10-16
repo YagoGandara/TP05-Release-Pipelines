@@ -39,7 +39,7 @@ stages:
     - task: ArchiveFiles@2
       displayName: 'Zip dist (front)'
       inputs:
-        rootFolderOrFile: 'frontend/dist/tp05-web'
+        rootFolderOrFile: 'frontend/dist/tp05-web/browser'
         includeRootFolder: false
         archiveFile: '$(Build.ArtifactStagingDirectory)/front.zip'
         archiveType: 'zip'
