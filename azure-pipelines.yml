@@ -41,7 +41,7 @@ stages:
         cd frontend/dist/tp05-web
         zip -r "$(Build.ArtifactStagingDirectory)/front.zip" .
       displayName: 'Zip dist (front)'
-      
+
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)/front.zip'
@@ -56,6 +56,7 @@ stages:
       inputs: { versionSpec: '$(python_version)', architecture: 'x64' }
 
     - script: |
+        set -e
         python -m pip install --upgrade pip
         pip install -r requirements.txt
       displayName: 'Install deps'
@@ -93,33 +94,32 @@ stages:
           - download: current
             artifact: back
 
+          # Genero env.js QA
+          - script: |
+              set -e
+              echo "window.__env = { apiBase: '$(apiBaseUrlQA)' };" > "$(Pipeline.Workspace)/env.qa.js"
+            displayName: 'Generate env.js (QA)'
+
+          #Re-empaqueto el front + env.js en un nuevo zip
+          - script: |
+              set -e
+              mkdir -p "$(Pipeline.Workspace)/front_qa_unpack"
+              cd "$(Pipeline.Workspace)/front_qa_unpack"
+              unzip -q "$(Pipeline.Workspace)/front/front.zip"
+              mkdir -p assets
+              cp "$(Pipeline.Workspace)/env.qa.js" assets/env.js
+              zip -qr "$(Pipeline.Workspace)/front-qa-with-env.zip" .
+            displayName: 'Repackage front with env.js (QA)' 
+
+          #Hago un solo Zip Deploy del front con el env.js
           - task: AzureWebApp@1
             displayName: 'Deploy FRONT to $(webQaName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webQaName)'
-              package: '$(Pipeline.Workspace)/front/front.zip'
-              deploymentMethod: 'zipDeploy'
-
-          #Creación y zippeo de env.js + API de QA
-          - script: |
-              set -e
-              mkdir -p "$(Pipeline.Workspace)/envqa/assets"
-              echo "window.__env = { apiBase: '$(apiBaseUrlQA)' };" > "$(Pipeline.Workspace)/envqa/assets/env.js"
-              cd "$(Pipeline.Workspace)/envqa"
-              zip -r "../env-qa.zip" .
-            displayName: 'Generate env.js (QA)'     
-
-          #Subida de ZIP para sobreescribir env.js
-          - task: AzureWebApp@1
-            displayName: 'Overlay env.js (QA)'
-            inputs:
-              azureSubscription: '$(azureConnection)'
-              appType: 'webAppLinux'
-              appName: '$(webQaName)'
-              package: '$(Pipeline.Workspace)/env-qa.zip'
-              deploymentMethod: 'zipDeploy'        
+              package: '$(Pipeline.Workspace)/front-qa-with-env.zip'
+              deploymentMethod: 'zipDeploy'     
 
           - task: AzureWebApp@1
             displayName: 'Deploy API to $(apiQaName)'
@@ -130,12 +130,10 @@ stages:
               package: '$(Pipeline.Workspace)/back/backend.zip'
               deploymentMethod: 'zipDeploy'
 
-
           - script: |
               set -e
               echo "Seeding QA..."
-              curl -fsS -X POST "$(apiBaseUrlQA)admin/seed" \
-                   -H "X-Seed-Token: $(seedTokenQA)"
+              curl -fsS -X POST "$(apiBaseUrlQA)admin/seed" -H "X-Seed-Token: $(seedTokenQA)"
               echo "Seed QA OK"
             displayName: 'Seed DB (QA)'
 
@@ -171,30 +169,31 @@ stages:
           - download: current
             artifact: back
 
+          #Genero env.js para PROD
+          - script: |
+              set -e
+              echo "window.__env = { apiBase: '$(apiBaseUrlPROD)' };" > "$(Pipeline.Workspace)/env.prod.js"
+            displayName: 'Generate env.js (PROD)'
+
+          #Re empaqueto el front + env.js PROD  
+          - script: |
+              set -e
+              mkdir -p "$(Pipeline.Workspace)/front_prod_unpack"
+              cd "$(Pipeline.Workspace)/front_prod_unpack"
+              unzip -q "$(Pipeline.Workspace)/front/front.zip"
+              mkdir -p assets
+              cp "$(Pipeline.Workspace)/env.prod.js" assets/env.js
+              zip -qr "$(Pipeline.Workspace)/front-prod-with-env.zip" .
+            displayName: 'Repackage front with env.js (PROD)'
+          
+          # Un solo deploy de FRONT
           - task: AzureWebApp@1
             displayName: 'Deploy FRONT to $(webProdName)'
             inputs:
               azureSubscription: '$(azureConnection)'
               appType: 'webAppLinux'
               appName: '$(webProdName)'
-              package: '$(Pipeline.Workspace)/front/front.zip'
-              deploymentMethod: 'zipDeploy'
-
-          - script: |
-              set -e
-              mkdir -p "$(Pipeline.Workspace)/envprod/assets"
-              echo "window.__env = { apiBase: '$(apiBaseUrlPROD)' };" > "$(Pipeline.Workspace)/envprod/assets/env.js"
-              cd "$(Pipeline.Workspace)/envprod"
-              zip -r "../env-prod.zip" .
-            displayName: 'Generate env.js (PROD)'
-
-          - task: AzureWebApp@1
-            displayName: 'Overlay env.js (PROD)'
-            inputs:
-              azureSubscription: '$(azureConnection)'
-              appType: 'webAppLinux'
-              appName: '$(webProdName)'
-              package: '$(Pipeline.Workspace)/env-prod.zip'
+              package: '$(Pipeline.Workspace)/front-prod-with-env.zip'
               deploymentMethod: 'zipDeploy'
 
           - task: AzureWebApp@1
@@ -209,11 +208,11 @@ stages:
           - script: |
               set -e
               echo "Seeding PROD..."
-              curl -fsS -X POST "$(apiBaseUrlPROD)admin/seed" \
-                   -H "X-Seed-Token: $(seedTokenPROD)"
+              curl -fsS -X POST "$(apiBaseUrlPROD)admin/seed" -H "X-Seed-Token: $(seedTokenPROD)"
               echo "Seed PROD OK"
             displayName: 'Seed DB (PROD)'
 
+            
           - script: |
               set -e
               echo "Waiting API to be ready..."
