@@ -18,8 +18,6 @@ def _ensure_sqlite_dir(db_url: str):
 
 _ensure_sqlite_dir(settings.DB_URL)
 
-engine = create_engine(
-    settings.DB_URL,
-    connect_args={"check_same_thread": False} if settings.DB_URL.startswith("sqlite") else {}
-)
+connect_args = {"check_same_thread": False} if settings.DB_URL.startswith("sqlite") else {}
+engine = create_engine(settings.DB_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

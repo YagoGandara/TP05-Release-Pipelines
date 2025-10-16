@@ -5,7 +5,7 @@ class TodoOut(BaseModel):
     title: str
     description: str | None = None
     done: bool
-    model_config = ConfigDict(from_attributes=True)  # <- clave
+    model_config = ConfigDict(from_attributes=True)  
 
 class TodoIn(BaseModel):
     title: str
